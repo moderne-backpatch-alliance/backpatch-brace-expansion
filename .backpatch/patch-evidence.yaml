@@ -1,6 +1,6 @@
 schema: osera-patch-evidence/0.1.0
 producer: moderne
-release: 2.0.4-backpatch-00005
+release: 2.0.4-backpatch-00006
 baseline: v2.0.3+backpatch.baseline
 fixes:
   - cve: CVE-2026-13149
@@ -42,12 +42,20 @@ fixes:
     basis: adapted
     artifacts:
       - brace-expansion
-    note: "New in this release; upstream's fix in 2.1.6 (1ba3c71, bec7bb7), adapted to 2.0.3. It closes the advisory: brace-expansion: DoS via uncontrolled recursion on nested brace groups causing stack exhaustion."
+    note: "Carried from 2.0.4-backpatch-00005; upstream's fix in 2.1.6 (1ba3c71, bec7bb7), adapted to 2.0.3. It closes the advisory: brace-expansion: DoS via uncontrolled recursion on nested brace groups causing stack exhaustion."
+  - cve: CVE-2026-102277
+    upstream_fix_url: https://github.com/juliangruber/brace-expansion/commit/bdff773f98e5988616b7039cc9b508df5d640b22
+    advisory_url: https://nvd.nist.gov/vuln/detail/CVE-2026-102277
+    patch_commit_url: https://github.com/moderne-backpatch-alliance/backpatch-brace-expansion/commit/89e24f9
+    basis: adapted
+    artifacts:
+      - brace-expansion
+    note: "New in this release; upstream's fix in 2.1.7, adapted to 2.0.3. It closes the advisory: brace-expansion: Quadratic-time expansion of the `{a},b}` rewrite causes CPU denial of service."
 tests:
-  commit: cc49614287c17ce5850c404cb8638be4aa4126be
+  commit: 89e24f9695c629bbf60eb5c7ee8ee89a3562d549
   command: npm ci --ignore-scripts at the tag for tape, then each of the tested commit's test/*.js run alone with tape under a 120 s alarm in a harness whose index.js requires the packed package (upstream's npm test, tape test/*.js, one file at a time), each assertion recorded into the JUnit report
   runtime: Node.js v22.23.2, npm 10.9.8, tape 4.13.3, macOS 27.2 arm64
-  report: brace-expansion-2.0.4-backpatch-00005-tests.zip
-  report_sha256: b7f19a2352a3ebd6de59b163ffe01c977663f6b981b49d89cf7adbdcd27a3029
+  report: brace-expansion-2.0.4-backpatch-00006-tests.zip
+  report_sha256: 5849950ca21a0d4a27ad32474bcf3f5aad5789a6d544b028878453e7fef202ed
   result: pass
-  note: "upstream's tape tests (every test/*.js, each alone with a 120 s alarm) against the packed package at the tested commit: 242 tests, 242 passed, 0 failed, 0 skipped. The CVE tests (test/ghsa-qhr7-859c-m2p7.js), with this release's production lines reverted at the tested commit: 15 tests, 7 passed, 8 failed, 0 skipped; with them: 18 tests, 18 passed, 0 failed, 0 skipped. Built with no build step (index.js ships as written), npm pack --ignore-scripts in a directory named brace-expansion, 2 of npmjs's 5 files for 2.0.3 are identical; the rest are README.md, index.js, package.json. The archive's file-origins.yaml maps each packaged file to the commit, or names its inputs and build."
+  note: "upstream's tape tests (every test/*.js, each alone with a 120 s alarm) against the packed package at the tested commit: 251 tests, 251 passed, 0 failed, 0 skipped. The CVE tests (test/ghsa-q2hr-2g5m-vwhr.js), with this release's production lines reverted at the tested commit: 9 tests, 6 passed, 3 failed, 0 skipped; with them: 9 tests, 9 passed, 0 failed, 0 skipped. Built with no build step (index.js ships as written), npm pack --ignore-scripts in a directory named brace-expansion, 2 of npmjs's 5 files for 2.0.3 are identical; the rest are README.md, index.js, package.json. The archive's file-origins.yaml maps each packaged file to the commit, or names its inputs and build."
