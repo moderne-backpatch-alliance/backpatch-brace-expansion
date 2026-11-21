@@ -1,0 +1,21 @@
+schema: osera-patch-evidence/0.1.0
+producer: moderne
+release: 2.0.4-backpatch-00001
+baseline: v2.0.3+backpatch.baseline
+fixes:
+  - cve: CVE-2026-13149
+    upstream_fix_url: https://github.com/juliangruber/brace-expansion/commit/835d6be91201122d9adffb0c0c8c094189ace265
+    advisory_url: https://nvd.nist.gov/vuln/detail/CVE-2026-13149
+    patch_commit_url: https://github.com/moderne-backpatch-alliance/backpatch-brace-expansion/commit/89689d0
+    basis: adapted
+    artifacts:
+      - brace-expansion
+    note: "New in this release; upstream's fix in 2.1.2, adapted to 2.0.3. It closes the advisory: brace-expansion: DoS via exponential-time expansion of consecutive non-expanding {} groups."
+tests:
+  commit: 89689d0b1f1a728e789a8ee1da4d74d33228eb63
+  command: npm ci --ignore-scripts at the tag for tape, then each of the tested commit's test/*.js run alone with tape under a 120 s alarm in a harness whose index.js requires the packed package (upstream's npm test, tape test/*.js, one file at a time), each assertion recorded into the JUnit report
+  runtime: Node.js v22.23.2, npm 10.9.8, tape 4.13.3, macOS 27.2 arm64
+  report: brace-expansion-2.0.4-backpatch-00001-tests.zip
+  report_sha256: 16b30c3a1672baf5eee1c786dbb34e274e0424f119d027cdcdd624c11b4d09fa
+  result: pass
+  note: "upstream's tape tests (every test/*.js, each alone with a 120 s alarm) against the packed package at the tested commit: 179 tests, 179 passed, 0 failed, 0 skipped. The CVE tests (test/unbound-recursion.js), with this release's production lines reverted at the tested commit: 0 tests, 0 passed, 0 failed, 0 skipped, test files exiting non-zero: test/unbound-recursion.js; with them: 2 tests, 2 passed, 0 failed, 0 skipped. Built with no build step (index.js ships as written), npm pack --ignore-scripts in a directory named brace-expansion, 3 of npmjs's 5 files for 2.0.3 are identical; the rest are index.js, package.json. The archive's file-origins.yaml maps each packaged file to the commit, or names its inputs and build."
