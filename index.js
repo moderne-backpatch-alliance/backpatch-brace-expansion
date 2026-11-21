@@ -105,6 +105,12 @@ function parseCommaParts(str) {
   }
 }
 
+// NaN or a non-number gets the default: every comparison against NaN is false,
+// so a NaN bound would never be reached. Pass `Infinity` to lift a bound.
+function bound(value, fallback) {
+  return value == null || isNaN(value) ? fallback : value;
+}
+
 function expandTop(str, options) {
   if (!str)
     return [];
@@ -112,7 +118,7 @@ function expandTop(str, options) {
   options = options || {};
   var max = options.max == null ? EXPANSION_MAX : options.max;
   var maxLength = options.maxLength == null ? EXPANSION_MAX_LENGTH : options.maxLength;
-  var maxDepth = options.maxDepth == null ? EXPANSION_MAX_DEPTH : options.maxDepth;
+  var maxDepth = bound(options.maxDepth, EXPANSION_MAX_DEPTH);
 
   // I don't know why Bash 4.3 does this, but it does.
   // Anything starting with {} will have the first two bytes preserved

@@ -57,3 +57,11 @@ test('maxDepth option bounds nesting depth', function (t) {
 
   t.end();
 })
+
+// A NaN bound used to be one that is never reached, so deep nesting overflowed
+// the stack again (CVE-2026-102278).
+test('maxDepth that is NaN gets its default', function (t) {
+  var deep = '{'.repeat(10000) + 'a,b' + '}'.repeat(10000)
+  t.deepEqual(expand(deep, { maxDepth: NaN }), expand(deep), 'maxDepth')
+  t.end()
+})
