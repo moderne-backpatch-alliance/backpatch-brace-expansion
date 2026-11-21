@@ -61,9 +61,12 @@ function parseCommaParts(str) {
   return parts;
 }
 
-function expandTop(str) {
+function expandTop(str, options) {
   if (!str)
     return [];
+
+  options = options || {};
+  var max = options.max == null ? Infinity : options.max;
 
   // I don't know why Bash 4.3 does this, but it does.
   // Anything starting with {} will have the first two bytes preserved
@@ -75,7 +78,7 @@ function expandTop(str) {
     str = '\\{\\}' + str.substr(2);
   }
 
-  return expand(escapeBraces(str), true).map(unescapeBraces);
+  return expand(escapeBraces(str), max, true).map(unescapeBraces);
 }
 
 function embrace(str) {
@@ -92,29 +95,24 @@ function gte(i, y) {
   return i >= y;
 }
 
-function expand(str, isTop) {
+function expand(str, max, isTop) {
   var expansions = [];
 
-  // The `{a},b}` rewrite below restarts expansion on a rewritten string.
-  // Loop instead of recursing so a long run
-  // of non-expanding `{}` groups can't exhaust the call stack.
-  for (;;) {
-    var m = balanced('{', '}', str)
-    if (!m) return [str]
+  var m = balanced('{', '}', str);
+  if (!m) return [str];
 
-    // no need to expand pre, since it is guaranteed to be free of brace-sets
-    var pre = m.pre
+  // no need to expand pre, since it is guaranteed to be free of brace-sets
+  var pre = m.pre;
+  var post = m.post.length
+    ? expand(m.post, max, false)
+    : [''];
 
-    if (/\$$/.test(m.pre)) {
-      var post =
-        m.post.length ? expand(m.post, false) : ['']
-      for (var k = 0; k < post.length; k++) {
-        var expansion = pre + '{' + m.body + '}' + post[k]
-        expansions.push(expansion)
-      }
-      return expansions
+  if (/\$$/.test(m.pre)) {    
+    for (var k = 0; k < post.length && k < max; k++) {
+      var expansion = pre+ '{' + m.body + '}' + post[k];
+      expansions.push(expansion);
     }
-
+  } else {
     var isNumericSequence = /^-?\d+\.\.-?\d+(?:\.\.-?\d+)?$/.test(m.body);
     var isAlphaSequence = /^[a-zA-Z]\.\.[a-zA-Z](?:\.\.-?\d+)?$/.test(m.body);
     var isSequence = isNumericSequence || isAlphaSequence;
@@ -123,20 +121,11 @@ function expand(str, isTop) {
       // {a},b}
       if (m.post.match(/,(?!,).*\}/)) {
         str = m.pre + '{' + m.body + escClose + m.post;
-        // v2.0.3 restarted with expand(str), isTop unset; upstream's `true`
-        // comes from the `max` commit b0302ac, which this line does not have.
-        isTop = false;
-        continue;
+        return expand(str, max, true);
       }
       return [str];
     }
 
-    // Only expand post once we know this brace set actually expands. Computing
-    // it before the early returns above expanded post a second time on every
-    // non-expanding `{}`, which is what made inputs like `a{},{},{}...` blow up
-    // exponentially.
-    var post =
-      m.post.length ? expand(m.post, false) : ['']
     var n;
     if (isSequence) {
       n = m.body.split(/\.\./);
@@ -144,7 +133,7 @@ function expand(str, isTop) {
       n = parseCommaParts(m.body);
       if (n.length === 1) {
         // x{{a,b}}y ==> x{a}y x{b}y
-        n = expand(n[0], false).map(embrace);
+        n = expand(n[0], max, false).map(embrace);
         if (n.length === 1) {
           return post.map(function(p) {
             return m.pre + n[0] + p;
@@ -199,18 +188,18 @@ function expand(str, isTop) {
       N = [];
 
       for (var j = 0; j < n.length; j++) {
-        N.push.apply(N, expand(n[j], false));
+        N.push.apply(N, expand(n[j], max, false));
       }
     }
 
     for (var j = 0; j < N.length; j++) {
-      for (var k = 0; k < post.length; k++) {
+      for (var k = 0; k < post.length && expansions.length < max; k++) {
         var expansion = pre + N[j] + post[k];
         if (!isTop || isSequence || expansion)
           expansions.push(expansion);
       }
     }
-
-    return expansions;
   }
+
+  return expansions;
 }
